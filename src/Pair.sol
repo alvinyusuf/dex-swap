@@ -6,7 +6,7 @@ import {ReentrancyGuard} from "@openzeppelin-contracts-5.1.0/utils/ReentrancyGua
 import {SafeERC20} from "@openzeppelin-contracts-5.1.0/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin-contracts-5.1.0/utils/math/Math.sol";
 import {ILPToken} from "./interfaces/ILPToken.sol";
-import {console} from "forge-std/console.sol";
+import {console} from "forge-std-1.9.4/src/console.sol";
 
 contract Pair is ReentrancyGuard {
     using SafeERC20 for IERC20;

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.4/src/Test.sol";
 import {Router} from "../src/Router.sol";
 import {TestToken} from "../src/TestToken.sol";
 import {Factory} from "../src/Factory.sol";
 import {LPToken} from "../src/LPToken.sol";
-import {console} from "forge-std/console.sol";
+import {console} from "forge-std-1.9.4/src/console.sol";
 import {IPair} from "../src/interfaces/IPair.sol";
 import {IERC20} from "@openzeppelin-contracts-5.1.0/token/ERC20/IERC20.sol";
 

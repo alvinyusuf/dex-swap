@@ -7,7 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin-contracts-5.1.0/utils/ReentrancyGua
 import {Pair} from "./Pair.sol";
 import {IPair} from "./interfaces/IPair.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
-import {console} from "forge-std/console.sol";
+import {console} from "forge-std-1.9.4/src/console.sol";
 
 contract Router is ReentrancyGuard {
     using SafeERC20 for IERC20;
