@@ -1,0 +1,33 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["dependencies"]
+# libs = ["lib", "dependencies"]
+
+[dependencies]
+forge-std = "1.9.4"
+"@openzeppelin-contracts" = "5.1.0"
+
+[soldeer]
+# whether soldeer manages remappings
+remappings_generate = true
+
+# whether soldeer re-generates all remappings when installing, updating or uninstalling deps
+remappings_regenerate = false
+
+# whether to suffix the remapping with the version: `name-a.b.c`
+remappings_version = true
+
+# a prefix to add to the remappings ("@" would give `@name`)
+remappings_prefix = ""
+
+# where to store the remappings ("txt" for `remappings.txt` or "config" for `foundry.toml`)
+# ignored when `soldeer.toml` is used as config (uses `remappings.txt`)
+remappings_location = "txt"
+
+recursive_deps = true
+
+[profile.ci]
+remappings = ["@openzeppelin-contracts-5.1.0/=lib/openzeppelin-contracts/"]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
