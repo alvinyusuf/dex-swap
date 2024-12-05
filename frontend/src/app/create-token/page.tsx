@@ -7,10 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useAccount, useTransactionReceipt, useWriteContract } from 'wagmi'
+import { BaseError, useAccount, useTransactionReceipt, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import abiTokenFactory from '@/utils/abi/token-factory.json'
-import { type UseWriteContractReturnType } from 'wagmi'
-import { WriteContractVariables } from 'wagmi/query'
+import { keccak256, WaitForTransactionReceiptReturnType } from 'viem'
+
+let hash
 
 const createTokenFormSchema = z.object({
     tokenName: z.string().min(2, "Token name must be at least 2 characters").nonempty(),
@@ -24,16 +25,10 @@ type FormFieldConfig = {
 }
 
 export default function CreateToken() {
-    const { writeContract, data } = useWriteContract()
+    const [transactionReceipt, setTransactionReceipt] = React.useState<WaitForTransactionReceiptReturnType | null>(null);
 
     const account = useAccount()
-
-    // useEffect(() => {
-    const result = useTransactionReceipt({
-        hash: data
-    })
-    console.log("result:", result)
-    // }, [data])
+    const { writeContract, data: hash, isPending, error } = useWriteContract()
 
     const form = useForm<z.infer<typeof createTokenFormSchema>>({
         resolver: zodResolver(createTokenFormSchema),
@@ -58,36 +53,56 @@ export default function CreateToken() {
 
     async function onSubmit(values: z.infer<typeof createTokenFormSchema>) {
         try {
-            let addressTx: any;
-
             writeContract(
                 {
-                    address: process.env.NEXT_PUBLIC_ADDRESS_FACTORY_TOKEN || '0x0',
+                    address: process.env.NEXT_PUBLIC_ADDRESS_FACTORY_TOKEN,
                     abi: abiTokenFactory,
                     functionName: 'createToken',
                     args: [account.address, values.initialSupply, values.tokenName, values.symbol]
                 },
-                // {
-                //     onSuccess: (data: WriteContractVariables) => {
-                //         addressTx = data;
-                //         console.log(addressTx);
-
-                //     },
-                //     onError: (error: any) => {
-                //         console.log(error)
-                //     }
-                // }
             )
-            // const tokenAddress = useTransactionReceipt({
-            //     hash: 
-            // })
-            // console.log("hehehe", addressTx)
-
-            console.log(values);
         } catch (error) {
             console.error("Submission error:", error);
         }
     }
+
+    // useEffect(() => {
+    //     async function fetchTransactionReceipt() {
+    //         if (hash) {
+    //             try {
+    //                 const receipt = await useWaitForTransactionReceipt({ hash })
+    //                 console.log('Transaction Receipt:', receipt);
+    //                 setTransactionReceipt(receipt);
+    //             } catch (error) {
+    //                 console.error('Transaction error:', error);
+    //             }
+    //         }
+    //     }
+    //     fetchTransactionReceipt();
+    // }, [hash]);
+
+
+    // const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    const { data } = useWaitForTransactionReceipt({
+        hash,
+    })
+
+    useEffect(() => console.log('Transaction Receipt:', data), [data])
+
+    useWatchContractEvent({
+        address: process.env.NEXT_PUBLIC_ADDRESS_FACTORY_TOKEN,
+        abi: abiTokenFactory,
+        eventName: 'TokenCreated',
+        onLogs(logs) {
+            console.log('Token Created:', logs)
+        }
+    })
+
+    // const transactionRecipt: any = useWaitForTransactionReceipt({
+    //     hash,
+    // })
+
+    // useEffect(() => console.log('Transaction Receipt:', transactionRecipt), [transactionRecipt])
 
     return (
         <div className='w-1/3 border rounded-sm p-4 space-y-4'>
@@ -110,7 +125,11 @@ export default function CreateToken() {
                             )}
                         />
                     ))}
-                    <Button type='submit' className='w-full'>Create Token</Button>
+                    <Button disabled={isPending} type='submit' className='w-full'>Create Token</Button>
+                    {error && <p>Error: {(error as BaseError).shortMessage || error.message}</p>}
+                    {hash && <p>Transaction Hash: {hash}</p>}
+                    {/* {isConfirming && <p>Wait for confirmation...</p>}
+                    {isConfirmed && <p>Transaction confirmed!</p>} */}
                 </form>
             </Form>
         </div>
