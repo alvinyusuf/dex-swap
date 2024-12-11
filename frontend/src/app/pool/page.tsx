@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { BaseError, useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { z } from 'zod'
 import abiRouter from '@/utils/abi/router.json'
 import abiErc20 from '@/utils/abi/erc20.json'
@@ -32,9 +32,10 @@ const formFields: FormFieldConfig[] = [
 
 export default function Pool() {
   const account = useAccount()
-  const { writeContract: writeContractAproveA, data: hashA, isPending: isPendingA, error: errorA, isSuccess: isSuccessA } = useWriteContract()
-  const { writeContract: writeContractAproveB, data: hashB, isPending: isPendingB, error: errorB, isSuccess: isSuccessB } = useWriteContract()
-  const { writeContract, data: hash, isPending, error, isSuccess } = useWriteContract()
+  const { writeContract: writeContractAddPair, data: hashPair, isPending: isPendingPair, error: errorPair } = useWriteContract()
+  const { writeContract: writeContractAproveA, data: hashA, isPending: isPendingA, error: errorA } = useWriteContract()
+  const { writeContract: writeContractAproveB, data: hashB, isPending: isPendingB, error: errorB } = useWriteContract()
+
   const [values, setValues] = useState({
     tokenAAddress: '',
     tokenBAddress: '',
@@ -42,7 +43,13 @@ export default function Pool() {
     tokenBAmount: 0,
   })
 
-  const { data: receiptA } = useWaitForTransactionReceipt({ hash: hashA })
+  const [transactionHashes, setTransactionHashes] = useState({
+    approveA: '',
+    approveB: '',
+    addLiquidity: ''
+  })
+
+  const [transactionStage, setTransactionStage] = useState<'idle' | 'approveA' | 'approveB' | 'addLiquidity' | 'completed'>('idle')
 
   const form = useForm<z.infer<typeof createPoolFormSchema>>({
     resolver: zodResolver(createPoolFormSchema),
@@ -54,54 +61,117 @@ export default function Pool() {
     }
   })
 
-  const result = useWaitForTransactionReceipt({
-    hash: '0x4ca7ee652d57678f26e887c149ab0735f41de37bcad58c9f6d3ed5824f15b74d',
+  const { isSuccess: isApproveASuccess, isError: isApproveAError } = useWaitForTransactionReceipt({
+    hash: hashA
   })
 
-  async function onSubmit(valuesForm: z.infer<typeof createPoolFormSchema>) {
+  const { isSuccess: isApproveBSuccess, isError: isApproveBError } = useWaitForTransactionReceipt({
+    hash: hashB
+  })
+
+  const { isSuccess: isAddLiquiditySuccess, isError: isAddLiquidityError } = useWaitForTransactionReceipt({
+    hash: hashPair
+  })
+
+  // Reset mekanisme jika ada error
+  useEffect(() => {
+    if (isApproveAError || isApproveBError || isAddLiquidityError) {
+      setTransactionStage('idle')
+    }
+  }, [isApproveAError, isApproveBError, isAddLiquidityError])
+
+  // Alur transaksi dengan mekanisme stage yang jelas
+  useEffect(() => {
+    if (transactionStage === 'approveA' && isApproveASuccess) {
+      writeContractAproveB({
+        address: values.tokenBAddress as `0x${string}`,
+        abi: abiErc20,
+        functionName: 'approve',
+        args: [process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`, BigInt(values.tokenBAmount * 10 ** 18)],
+      })
+      setTransactionStage('approveB')
+    }
+  }, [transactionStage, isApproveASuccess, values])
+
+  useEffect(() => {
+    if (transactionStage === 'approveB' && isApproveBSuccess) {
+      writeContractAddPair({
+        address: process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`,
+        abi: abiRouter,
+        functionName: 'addLiquidity',
+        args: [
+          values.tokenAAddress as `0x${string}`,
+          values.tokenBAddress as `0x${string}`,
+          BigInt(values.tokenAAmount * 10 ** 18),
+          BigInt(values.tokenBAmount * 10 ** 18),
+        ],
+      })
+      setTransactionStage('addLiquidity')
+    }
+  }, [transactionStage, isApproveBSuccess, values])
+
+  useEffect(() => {
+    if (transactionStage === 'addLiquidity' && isAddLiquiditySuccess) {
+      setTransactionStage('completed')
+
+      // Reset form dan stage setelah beberapa detik
+      const timer = setTimeout(() => {
+        setTransactionStage('idle')
+        form.reset() // Reset form react-hook-form
+      }, 3000) // Misalnya tunggu 3 detik sebelum reset
+
+      // Bersihkan timer untuk mencegah memory leak
+      return () => clearTimeout(timer)
+    }
+  }, [transactionStage, isAddLiquiditySuccess, form])
+
+  async function onSubmit(formValues: z.infer<typeof createPoolFormSchema>) {
     try {
       if (account.address) {
-        setValues(valuesForm)
+        setValues(formValues)
         writeContractAproveA({
-          address: values.tokenAAddress as `0x${string}`,
+          address: formValues.tokenAAddress as `0x${string}`,
           abi: abiErc20,
           functionName: 'approve',
-          args: [process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`, BigInt(values.tokenAAmount * 10 ** 18)],
+          args: [process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`, BigInt(formValues.tokenAAmount * 10 ** 18)],
         })
+        setTransactionStage('approveA')
       } else {
         console.error("Account address is undefined");
       }
     } catch (error) {
       console.error("Submission error:", error);
+      setTransactionStage('idle')
     }
   }
 
-  // useEffect(() => {
-  //   writeContractAproveA({
-  //     address: values.tokenAAddress as `0x${string}`,
-  //     abi: abiErc20,
-  //     functionName: 'approve',
-  //     args: [process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`, BigInt(values.tokenAAmount * 10 ** 18)],
-  //   })
-  // }, [values])
+  // Tambahkan di useEffect untuk setiap tahap
+  useEffect(() => {
+    if (hashA) {
+      setTransactionHashes(prev => ({
+        ...prev,
+        approveA: hashA
+      }))
+    }
+  }, [hashA])
 
   useEffect(() => {
-    writeContractAproveB({
-      address: values.tokenBAddress as `0x${string}`,
-      abi: abiErc20,
-      functionName: 'approve',
-      args: [process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`, BigInt(values.tokenBAmount * 10 ** 18)],
-    })
-  }, [isSuccessA === true, receiptA])
+    if (hashB) {
+      setTransactionHashes(prev => ({
+        ...prev,
+        approveB: hashB
+      }))
+    }
+  }, [hashB])
 
   useEffect(() => {
-    writeContract({
-      address: process.env.NEXT_PUBLIC_ADDRESS_ROUTER as `0x${string}`,
-      abi: abiRouter,
-      functionName: 'addLiquidity',
-      args: [values.tokenAAddress, values.tokenBAddress, BigInt(values.tokenAAmount * 10 ** 18), BigInt(values.tokenBAmount * 10 ** 18)],
-    })
-  }, [isSuccessB === true, isPendingA === false, isPendingB === false])
+    if (hashPair) {
+      setTransactionHashes(prev => ({
+        ...prev,
+        addLiquidity: hashPair
+      }))
+    }
+  }, [hashPair])
 
   return (
     <div className='w-1/3 border rounded-sm p-4 space-y-4'>
@@ -124,13 +194,43 @@ export default function Pool() {
               )}
             />
           ))}
-          <Button disabled={isPendingA || isPendingB || isPendingB} type='submit' className='w-full'>Create Pool</Button>
-          {error && <p>Error: {(error as BaseError).shortMessage || error.message}</p>}
-          {isPending && <p>Transaction pending</p>}
-          {isSuccess && <p>Transaction success</p>}
+          <Button
+            disabled={transactionStage !== 'idle'}
+            type='submit'
+            className='w-full'
+          >
+            Create Pool
+          </Button>
+          {/* Tampilkan hash transaksi */}
+          {transactionHashes.approveA && (
+            <div className="text-sm">
+              Approve A Hash: {transactionHashes.approveA}
+            </div>
+          )}
+          {transactionHashes.approveB && (
+            <div className="text-sm">
+              Approve B Hash: {transactionHashes.approveB}
+            </div>
+          )}
+          {transactionHashes.addLiquidity && (
+            <div className="text-sm">
+              Add Liquidity Hash: {transactionHashes.addLiquidity}
+            </div>
+          )}
 
-          {error && <p className="text-red-500">Error: {(error as BaseError).shortMessage || error.message}</p>}
-          {hash && <p>Transaction Hash: {hash}</p>}
+          {(isPendingA || isPendingB || isPendingPair) && <p>Transaction pending: {transactionStage}</p>}
+
+          {/* Error handling */}
+          {errorA && <p className="text-red-500">Error A: {errorA.message}</p>}
+          {errorB && <p className="text-red-500">Error B: {errorB.message}</p>}
+          {errorPair && <p className="text-red-500">Error Pair: {errorPair.message}</p>}
+
+          {transactionStage === 'completed' && (
+            <div className="text-green-500 mt-2">
+              Pool creation successful!
+              <p>You have successfully created a liquidity pool with the selected tokens.</p>
+            </div>
+          )}
         </form>
       </Form>
     </div>
