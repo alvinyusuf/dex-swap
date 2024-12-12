@@ -20,5 +20,5 @@ contract CreateToken is Script {
         console.log("Token created at address:", tokenAddress);
 
         vm.stopBroadcast();
- }
+    }
 }
