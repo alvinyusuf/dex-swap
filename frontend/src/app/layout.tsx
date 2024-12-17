@@ -49,6 +49,7 @@ export default async function RootLayout({
             </div>
           </div>
         </Providers>
+        <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
       </body>
     </html>
   );
