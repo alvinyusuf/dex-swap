@@ -26,8 +26,8 @@ export default function Header() {
                 </NavigationMenuLink>
                 <NavigationMenuList>
                     {navItems.map((item) => (
-                        <Button key={item.href} variant={'link'} className={currentPath === item.href ? 'underline' : ''} asChild>
-                            <Link href={item.href}>{item.title}</Link>
+                        <Button key={item.href} variant={'link'} className={(currentPath === item.href ? 'underline ' : '') + 'font-bold text-foreground'} asChild>
+                            <Link href={item.href} className='font-bold'>{item.title}</Link>
                         </Button>
                     ))}
                 </NavigationMenuList>

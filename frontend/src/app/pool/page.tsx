@@ -174,10 +174,10 @@ export default function Pool() {
   }, [hashPair])
 
   return (
-    <div className='w-1/3 border rounded-sm p-4 space-y-4'>
-      <h1>Create your pool</h1>
+    <div className='w-1/3 flex flex-col items-center gap-y-4'>
+      <h1 className='font-bold text-2xl text-primary'>Create your pool</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='w-full border border-foreground rounded-lg p-4 space-y-4'>
           {formFields.map((formField) => (
             <FormField
               key={formField.name}
@@ -185,9 +185,9 @@ export default function Pool() {
               name={formField.name}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{formField.label}</FormLabel>
+                  <FormLabel className='font-semibold text-primary'>{formField.label}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className='border-foreground' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -197,7 +197,7 @@ export default function Pool() {
           <Button
             disabled={transactionStage !== 'idle'}
             type='submit'
-            className='w-full'
+            className='w-full bg-foreground'
           >
             Create Pool
           </Button>
