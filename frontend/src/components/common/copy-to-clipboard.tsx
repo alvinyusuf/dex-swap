@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Check, Copy } from 'lucide-react'
 
-interface CopyToClipboardProps {
-  text: string
-}
-
-export function CopyToClipboard({ text }: CopyToClipboardProps) {
+export function CopyToClipboard({ text }: { text: string | undefined }) {
   const [isCopied, setIsCopied] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -26,7 +22,7 @@ export function CopyToClipboard({ text }: CopyToClipboardProps) {
   }
 
   return (
-    <div className="flex w-full max-w-sm items-center space-x-2">
+    <span className="inline-flex w-full max-w-sm items-center space-x-2">
       <Input
         type="text"
         value={text}
@@ -46,7 +42,7 @@ export function CopyToClipboard({ text }: CopyToClipboardProps) {
           <Copy className="h-4 w-4" />
         )}
       </Button>
-    </div>
+    </span>
   )
 }
 

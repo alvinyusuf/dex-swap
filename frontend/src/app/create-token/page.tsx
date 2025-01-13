@@ -26,7 +26,7 @@ export default function CreateToken() {
 		eventName: 'TokenCreated',
 		enabled: isSuccess,
 		onLogs(logs) {
-			const tokenCreatedEvent = logs[0]
+			const tokenCreatedEvent = logs[0] as unknown as { args: { tokenAddress: string, symbol: string } }
 			setTokenCreationResult({
 				success: true,
 				tokenAddress: tokenCreatedEvent.args.tokenAddress,
