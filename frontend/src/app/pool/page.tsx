@@ -10,6 +10,7 @@ import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagm
 import { z } from 'zod'
 import abiRouter from '@/utils/abi/router.json'
 import abiErc20 from '@/utils/abi/erc20.json'
+import { SelectTokens } from '@/components/tokens/select-tokens'
 
 const createPoolFormSchema = z.object({
   tokenAAddress: z.string(),
@@ -178,6 +179,19 @@ export default function Pool() {
       <h1 className='font-bold text-2xl text-primary'>Create your pool</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className='w-full border border-foreground rounded-lg p-4 space-y-4'>
+          <FormField
+            control={form.control}
+            name="tokenAAddress"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <SelectTokens />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {formFields.map((formField) => (
             <FormField
               key={formField.name}
