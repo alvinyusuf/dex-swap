@@ -1,75 +1,22 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import { useAccount, useWatchAsset, useWatchContractEvent, useWriteContract } from 'wagmi'
-import abiTokenFactory from '@/utils/abi/token-factory.json'
-import TokenForm from './token-form'
-import { z } from 'zod'
-import type { createTokenFormSchema } from './token-form'
-
-const abi = abiTokenFactory
+import React from 'react';
+import TokenForm, { createTokenFormSchema } from './token-form'
+import { z } from 'zod';
+import { useTokenFactory } from '@/web3/hooks/token-factory/useTokenFactory';
 
 export default function CreateToken() {
-	const [tokenCreationResult, setTokenCreationResult] = useState<{
-		success?: boolean
-		tokenAddress?: string
-		error?: string
-	}>({})
-
-	const account = useAccount()
-	const { writeContract, data: hash, isPending, error, isSuccess } = useWriteContract()
-	const { watchAsset } = useWatchAsset()
-
-	useWatchContractEvent({
-		address: process.env.NEXT_PUBLIC_ADDRESS_FACTORY_TOKEN as `0x${string}`,
-		abi,
-		eventName: 'TokenCreated',
-		enabled: isSuccess,
-		onLogs(logs) {
-			const tokenCreatedEvent = logs[0] as unknown as { args: { tokenAddress: string, symbol: string } }
-			setTokenCreationResult({
-				success: true,
-				tokenAddress: tokenCreatedEvent.args.tokenAddress,
-			})
-
-			watchAsset({
-				type: 'ERC20',
-				options: {
-					address: tokenCreatedEvent.args.tokenAddress,
-					symbol: tokenCreatedEvent.args.symbol,
-					decimals: 18,
-				}
-			})
-		},
-		onError(error) {
-			setTokenCreationResult({
-				success: false,
-				error: error.message
-			})
-		},
-	})
-
-	useEffect(() => {
-		if (isPending) {
-			setTokenCreationResult({})
-		}
-	}, [isPending])
+	const {
+		createToken,
+		isPending,
+		error,
+		isSuccess,
+		hash,
+		tokenCreationResult,
+	} = useTokenFactory();
 
 	async function onSubmit(values: z.infer<typeof createTokenFormSchema>) {
-		try {
-			if (account.address) {
-				writeContract({
-					address: process.env.NEXT_PUBLIC_ADDRESS_FACTORY_TOKEN as `0x${string}`,
-					abi,
-					functionName: 'createToken',
-					args: [account.address, BigInt(values.initialSupply), values.tokenName, values.symbol],
-				})
-			} else {
-				console.error("Account address is undefined");
-			}
-		} catch (error) {
-			console.error("Submission error:", error);
-		}
+		await createToken(values.tokenName, values.symbol, values.initialSupply);
 	}
 
 	return (
@@ -84,5 +31,5 @@ export default function CreateToken() {
 				tokenCreationResult={tokenCreationResult}
 			/>
 		</div>
-	)
+	);
 }
