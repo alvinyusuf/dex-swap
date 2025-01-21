@@ -8,38 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import TransactionAlert from './transaction-alert'
-
-const createTokenFormSchema = z.object({
-  tokenName: z.string().min(2, "Token name must be at least 2 characters").nonempty(),
-  symbol: z.string().min(3, "Symbol must be at least 3 characters").nonempty(),
-  initialSupply: z.preprocess((value) => parseInt(value as string, 10), z.number({ message: "Initial Supply must be a number" }).positive()),
-})
-
-type FormFieldConfig = {
-  name: keyof z.infer<typeof createTokenFormSchema>
-  label: string,
-}
-
-const formFields: FormFieldConfig[] = [
-  { name: 'tokenName', label: 'Token Name' },
-  { name: 'symbol', label: 'Symbol' },
-  { name: 'initialSupply', label: 'Initial Supply' }
-]
-
-interface TokenFormProps {
-  onSubmit: (values: z.infer<typeof createTokenFormSchema>) => void
-  isPending: boolean
-  error: Error | null
-  isSuccess: boolean
-  hash?: string
-  tokenCreationResult: {
-    success?: boolean
-    tokenAddress?: string
-    error?: string
-  }
-}
-
-export type { createTokenFormSchema }
+import { createTokenFormSchema, formFields, TokenFormProps } from '@/types/token-form'
 
 export default function TokenForm({
   onSubmit,

@@ -1,4 +1,4 @@
-import { TransactionHashes, TransactionStage } from "./types"
+import { TransactionHashes, TransactionStage } from "@/types/pool-form"
 
 interface TransactionStatusProps {
   hashes: TransactionHashes

@@ -7,6 +7,7 @@ import {SafeERC20} from "@openzeppelin-contracts-5.1.0/token/ERC20/utils/SafeERC
 import {Math} from "@openzeppelin-contracts-5.1.0/utils/math/Math.sol";
 import {ILPToken} from "./interfaces/ILPToken.sol";
 import {console} from "forge-std-1.9.4/src/console.sol";
+import {ERC20} from "@openzeppelin-contracts-5.1.0/token/ERC20/ERC20.sol";
 
 contract Pair is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -144,5 +145,37 @@ contract Pair is ReentrancyGuard {
     function _updateReserves() internal {
         reserveA = IERC20(tokenA).balanceOf(address(this));
         reserveB = IERC20(tokenB).balanceOf(address(this));
+    }
+
+    function getPoolInfo()
+        external
+        view
+        returns (
+            address _tokenA,
+            address _tokenB,
+            uint256 _reserveA,
+            uint256 _reserveB,
+            uint256 _totalLiquidity,
+            address _lpToken
+        )
+    {
+        return (tokenA, tokenB, reserveA, reserveB, totalLiquidity, lpToken);
+    }
+
+    function getUserLiquidity(address user) external view returns (uint256) {
+        return liquidity[user];
+    }
+
+    function getCurrentPrice() external view returns (uint256 priceAtoB, uint256 priceBtoA) {
+        require(reserveA > 0 && reserveB > 0, "Empty reserves");
+
+        priceAtoB = (reserveB * 1e18) / reserveA;
+
+        priceBtoA = (reserveA * 1e18) / reserveB;
+    }
+
+    function getTokenDecimals() external view returns (uint8 decimalsA, uint8 decimalsB) {
+        decimalsA = ERC20(tokenA).decimals();
+        decimalsB = ERC20(tokenB).decimals();
     }
 }

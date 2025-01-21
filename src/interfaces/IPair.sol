@@ -27,4 +27,24 @@ interface IPair {
         returns (uint256 amountOut);
 
     function sync() external;
+
+    function getPoolInfo()
+        external
+        view
+        returns (
+            address _tokenA,
+            address _tokenB,
+            uint256 _reserveA,
+            uint256 _reserveB,
+            uint256 _totalLiquidity,
+            address _lpToken
+        );
+
+    function getUserLiquidity(address user) external view returns (uint256);
+
+    function getCurrentPrice() external view returns (uint256 priceAtoB, uint256 priceBtoA);
+
+    function getTokenDecimals() external view returns (uint8 decimalsA, uint8 decimalsB);
+
+    function allPairsLength() external view returns (uint256);
 }

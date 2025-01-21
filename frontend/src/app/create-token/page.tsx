@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import TokenForm, { createTokenFormSchema } from './token-form'
+import TokenForm from './token-form'
 import { z } from 'zod';
 import { useTokenFactory } from '@/web3/hooks/token-factory/useTokenFactory';
+import { createTokenFormSchema } from '@/types/token-form';
 
 export default function CreateToken() {
 	const {
